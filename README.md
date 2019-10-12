@@ -1,3 +1,5 @@
 # map-reducer
 
-first commit
+# References:
+
+Thread pool: https://github.com/Pithikos/C-Thread-Pool/blob/master/thpool.c
