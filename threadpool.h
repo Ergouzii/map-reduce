@@ -15,8 +15,8 @@ typedef struct ThreadPool_work_t {
 typedef struct {
     pthread_mutex_t queue_mutex;
     pthread_cond_t queue_cond;
-    ThreadPool_work_t *head; // dequeue
-    ThreadPool_work_t *tail; // enqueue
+    ThreadPool_work_t *head;
+    ThreadPool_work_t *tail;
     int cur_size; // current num of works in queue
 } ThreadPool_work_queue_t;
 
