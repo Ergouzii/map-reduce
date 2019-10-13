@@ -1,5 +1,9 @@
 #include "threadpool.h"
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
 
 ThreadPool_t *ThreadPool_create(int num) {
 
@@ -11,7 +15,7 @@ ThreadPool_t *ThreadPool_create(int num) {
         return NULL;
     }
 
-    // init tp struct variables
+    // init threadpool variables
     tp -> max_thread_num = num;
     tp -> shutdown = 0;
     tp -> threads = (pthread_t *) malloc(sizeof(pthread_t) * num);
@@ -27,6 +31,7 @@ ThreadPool_t *ThreadPool_create(int num) {
     pthread_mutex_init(&(tp -> tp_mutex), NULL);
     pthread_cond_init(&(tp -> tp_cond), NULL);
     pthread_mutex_init(&(tp -> work_queue -> queue_mutex), NULL);
+    pthread_cond_init(&(tp -> work_queue -> queue_cond), NULL);
 
     // create pthreads
     for (int i = 0; i < num; i++) {
@@ -60,9 +65,11 @@ void ThreadPool_destroy(ThreadPool_t *tp) {
     // destroy synchronization primitives
     pthread_mutex_destroy(&(tp -> tp_mutex));
 	pthread_cond_destroy(&(tp -> tp_cond));
+    pthread_mutex_destroy(&(tp -> work_queue -> queue_mutex));
+    pthread_cond_destroy(&(tp -> work_queue -> queue_cond));
  
 	free(tp);
-	// point tp to NULL after free
+	// point tp to NULL after freeing
 	tp = NULL;
 }
 
@@ -72,21 +79,26 @@ bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
     new_work -> func = func;
     new_work -> arg = arg;
     new_work -> next = NULL;
+    // TODO: init work size here using stat(2)
 
     // put new work to queue
     // TODO: add new work in LJF order
     pthread_mutex_lock(&(tp -> work_queue -> queue_mutex));
     ThreadPool_work_t *head = tp -> work_queue -> head;
     if (head == NULL) { // if queue is empty
-        tp -> work_queue -> head = new_work;
+        head = new_work;
     } else { // if queue not empty
         while (head -> next != NULL) {
             head = head -> next;
         }
         head -> next = new_work; // add new_work to head
     }
+    tp -> work_queue -> cur_size++; // update size of queue
+
     pthread_mutex_unlock(&(tp -> work_queue -> queue_mutex));
-    // pthread_cond_signal(&(tp -> work_queue -> cond));
+    pthread_cond_signal(&(tp -> work_queue -> queue_cond)); // wake a waiting thread to do work
+
+    // TODO: return a bool indicating add_work succeed or fail
 }
 
 ThreadPool_work_t *ThreadPool_get_work(ThreadPool_t *tp) {
@@ -113,7 +125,10 @@ void *Thread_run(ThreadPool_t *tp) {
 
         // when work queue is not empty
         printf("Thread %d is going to work\n", pthread_self());
-        assert(tp -> work_queue -> head != NULL); // make sure head is not NULL
+        if (tp -> work_queue -> head == NULL) { // make sure head is not NULL
+            perror("work queue head is NULL\n");
+            return -1;
+        } 
 
         cur_work = tp -> work_queue -> head;
         tp -> work_queue -> head = tp -> work_queue -> head -> next;
