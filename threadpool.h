@@ -19,12 +19,13 @@ typedef struct {
 } ThreadPool_work_queue_t;
 
 typedef struct {
-    pthread_mutex_t pool_mutex;
-    pthread_cond_t pool_cond;    
+    pthread_mutex_t tp_mutex;
+    pthread_cond_t tp_cond;    
     int max_thread_num;
     int shutdown; // whether treadpool is shutdown, 1 = yes, 0 = no
-    pthread_t *thread_id;
-    ThreadPool_work_queue_t work_queue;
+    pthread_t *threads; // all threads
+    // int num_alive_threads; // number of running threads
+    ThreadPool_work_queue_t *work_queue; // working threads in queue
 } ThreadPool_t;
 
 
