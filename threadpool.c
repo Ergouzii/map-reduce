@@ -20,8 +20,8 @@ ThreadPool_t *ThreadPool_create(int num) {
     tp -> work_queue = (ThreadPool_work_queue_t *) \
                 malloc(sizeof(ThreadPool_work_queue_t) * num); // TODO: what is queue's max size?
     tp -> work_queue -> cur_size = 0;
-    tp -> work_queue -> front = NULL;
-    tp -> work_queue -> rear = NULL;
+    tp -> work_queue -> head = NULL;
+    tp -> work_queue -> tail = NULL;
 
     // init synchronization primitives
     pthread_mutex_init(&(tp -> tp_mutex), NULL);
@@ -50,10 +50,10 @@ void ThreadPool_destroy(ThreadPool_t *tp) {
 
     // destroy work queue
     ThreadPool_work_t *temp_work, *cur_work;
-    cur_work = tp -> work_queue -> front;
+    cur_work = tp -> work_queue -> head;
     while (cur_work != NULL) {
         temp_work = cur_work;
-        cur_work = cur_work -> next; // TODO: is front.next going towards rear?
+        cur_work = cur_work -> next; // TODO: is head.next going towards tail?
         free(temp_work);
     }
 
@@ -76,14 +76,14 @@ bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
     // put new work to queue
     // TODO: add new work in LJF order
     pthread_mutex_lock(&(tp -> work_queue -> queue_mutex));
-    ThreadPool_work_t *head = tp -> work_queue -> front;
-    if (head == NULL) {
-        tp -> work_queue -> front = new_work;
-    } else {
+    ThreadPool_work_t *head = tp -> work_queue -> head;
+    if (head == NULL) { // if queue is empty
+        tp -> work_queue -> head = new_work;
+    } else { // if queue not empty
         while (head -> next != NULL) {
             head = head -> next;
         }
-        head -> next = new_work;
+        head -> next = new_work; // add new_work to head
     }
     pthread_mutex_unlock(&(tp -> work_queue -> queue_mutex));
     // pthread_cond_signal(&(tp -> work_queue -> cond));
@@ -94,5 +94,32 @@ ThreadPool_work_t *ThreadPool_get_work(ThreadPool_t *tp) {
 }
 
 void *Thread_run(ThreadPool_t *tp) {
+    printf("Thread %d is ready\n", pthread_self());
+    ThreadPool_work_t *cur_work;
+    while (1) {
+        pthread_mutex_lock(&(tp -> work_queue -> queue_mutex)); // lock the queue
 
+        // if none work left
+        if (tp -> work_queue -> head == NULL) { 
+            if (tp -> shutdown == 0) { // if shutdown pool
+                printf("Thread %d is waiting\n", pthread_self());
+                pthread_cond_wait(&(tp -> work_queue -> queue_cond), &(tp -> work_queue -> queue_mutex));
+            } else { // if not shutdown pool
+                pthread_mutex_unlock(&(tp -> work_queue -> queue_mutex));
+                printf("Thread %d is done\n", pthread_self());
+                pthread_exit(NULL);
+            }   
+        }
+
+        // when work queue is not empty
+        printf("Thread %d is going to work\n", pthread_self());
+        assert(tp -> work_queue -> head != NULL); // make sure head is not NULL
+
+        cur_work = tp -> work_queue -> head;
+        tp -> work_queue -> head = tp -> work_queue -> head -> next;
+        pthread_mutex_unlock(&(tp -> work_queue -> queue_mutex));
+        (cur_work -> func)(cur_work -> arg); // run the cur work's func
+        free(cur_work);
+        cur_work = NULL;
+    }
 }

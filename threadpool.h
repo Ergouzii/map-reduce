@@ -9,18 +9,20 @@ typedef struct ThreadPool_work_t {
     thread_func_t func;              // The function pointer
     void *arg;                       // The arguments for the function
     ThreadPool_work_t *next; // each work should know which work comes next
+    int size; // file size of the work
 } ThreadPool_work_t;
 
 typedef struct {
     pthread_mutex_t queue_mutex;
-    ThreadPool_work_t *front; // dequeue
-    ThreadPool_work_t *rear; // enqueue
+    pthread_cond_t queue_cond;
+    ThreadPool_work_t *head; // dequeue
+    ThreadPool_work_t *tail; // enqueue
     int cur_size; // current num of works in queue
 } ThreadPool_work_queue_t;
 
 typedef struct {
     pthread_mutex_t tp_mutex;
-    pthread_cond_t tp_cond;    
+    pthread_cond_t tp_cond;
     int max_thread_num;
     int shutdown; // whether treadpool is shutdown, 1 = yes, 0 = no
     pthread_t *threads; // all threads
