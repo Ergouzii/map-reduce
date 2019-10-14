@@ -8,7 +8,7 @@ typedef void (*thread_func_t)(void *arg);
 typedef struct ThreadPool_work_t {
     thread_func_t func;              // The function pointer
     void *arg;                       // The arguments for the function
-    ThreadPool_work_t *next; // each work should know which work comes next
+    struct ThreadPool_work_t *next; // each work should know which work comes next
     int size; // file size of the work
 } ThreadPool_work_t;
 

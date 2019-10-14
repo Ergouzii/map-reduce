@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <string.h>
 
 ThreadPool_t *ThreadPool_create(int num) {
 
@@ -37,12 +38,13 @@ ThreadPool_t *ThreadPool_create(int num) {
     for (int i = 0; i < num; i++) {
         pthread_create(&(tp -> threads[i]), NULL, Thread_run, NULL);
     }
+    return NULL;
 }
 
 void ThreadPool_destroy(ThreadPool_t *tp) {
-    if (tp == NULL) return -1;
+    if (tp == NULL) return;
 
-    if (tp -> shutdown == 1) return -1; // avoid shutting down multiple times
+    if (tp -> shutdown == 1) return; // avoid shutting down multiple times
     tp -> shutdown = 1; // make sure shutdown is positive
 
     pthread_cond_broadcast(&(tp -> tp_cond)); // wake waiting threads
@@ -99,14 +101,15 @@ bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
     pthread_cond_signal(&(tp -> work_queue -> queue_cond)); // wake a waiting thread to do work
 
     // TODO: return a bool indicating add_work succeed or fail
+    return NULL;
 }
 
 ThreadPool_work_t *ThreadPool_get_work(ThreadPool_t *tp) {
-
+    return NULL;
 }
 
 void *Thread_run(ThreadPool_t *tp) {
-    printf("Thread %d is ready\n", pthread_self());
+    printf("Thread %p is ready\n", pthread_self());
     ThreadPool_work_t *cur_work;
     while (1) {
         pthread_mutex_lock(&(tp -> work_queue -> queue_mutex)); // lock the queue
@@ -114,20 +117,19 @@ void *Thread_run(ThreadPool_t *tp) {
         // if none work left
         if (tp -> work_queue -> head == NULL) { 
             if (tp -> shutdown == 0) { // if shutdown pool
-                printf("Thread %d is waiting\n", pthread_self());
+                printf("Thread %p is waiting\n", pthread_self());
                 pthread_cond_wait(&(tp -> work_queue -> queue_cond), &(tp -> work_queue -> queue_mutex));
             } else { // if not shutdown pool
                 pthread_mutex_unlock(&(tp -> work_queue -> queue_mutex));
-                printf("Thread %d is done\n", pthread_self());
+                printf("Thread %p is done\n", pthread_self());
                 pthread_exit(NULL);
             }   
         }
 
         // when work queue is not empty
-        printf("Thread %d is going to work\n", pthread_self());
+        printf("Thread %p is going to work\n", pthread_self());
         if (tp -> work_queue -> head == NULL) { // make sure head is not NULL
             perror("work queue head is NULL\n");
-            return -1;
         } 
 
         cur_work = tp -> work_queue -> head;
@@ -137,4 +139,29 @@ void *Thread_run(ThreadPool_t *tp) {
         free(cur_work);
         cur_work = NULL;
     }
+}
+
+// **************************************************************
+void my_func(void *arg) {
+    printf("*Thread %p working on %d*\n", pthread_self(), *(int *) arg);
+    sleep(1);
+    return;
+}
+
+int main() {
+    ThreadPool_t *tp = ThreadPool_create(3);
+
+    int *num_work = (int *) malloc(sizeof(int) * 10);
+    for (int i = 0; i < 10; i++) {
+        num_work[i] = i;
+        ThreadPool_add_work(tp, my_func, &num_work[i]);
+    }
+
+    sleep(5);
+
+    ThreadPool_destroy(tp);
+
+    free(num_work);
+
+    return 0;
 }
