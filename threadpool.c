@@ -12,10 +12,7 @@ ThreadPool_t *ThreadPool_create(int num) {
     // make new threadpool (tp)
     ThreadPool_t *tp;
     tp = (ThreadPool_t *) malloc(sizeof(ThreadPool_t));
-    if (tp == NULL) {
-        perror("ThreadPool_create failed, no memory for the pool.\n");
-        return NULL;
-    }
+    assert(tp != NULL);
 
     // init threadpool variables
     tp -> max_thread_num = num;
@@ -43,9 +40,9 @@ ThreadPool_t *ThreadPool_create(int num) {
 }
 
 void ThreadPool_destroy(ThreadPool_t *tp) {
-    if (tp == NULL) return;
+    assert(tp != NULL);
 
-    if (tp -> shutdown == 1) return; // avoid shutting down multiple times
+    assert(tp -> shutdown != 1); // avoid shutting down multiple times
     tp -> shutdown = 1; // make sure shutdown is positive
 
     pthread_cond_broadcast(&(tp -> tp_cond)); // wake waiting threads
