@@ -13,16 +13,14 @@ typedef struct ThreadPool_work_t {
 } ThreadPool_work_t;
 
 typedef struct {
-    pthread_mutex_t queue_mutex;
-    pthread_cond_t queue_cond;
     ThreadPool_work_t *head;
     ThreadPool_work_t *tail;
     int cur_size; // current num of works in queue
 } ThreadPool_work_queue_t;
 
 typedef struct {
-    pthread_mutex_t tp_mutex;
-    pthread_cond_t tp_cond;
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
     int max_thread_num;
     int shutdown; // whether treadpool is shutdown, 1 = yes, 0 = no
     pthread_t *threads; // all threads
