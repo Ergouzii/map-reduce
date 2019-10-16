@@ -7,6 +7,8 @@
 #include <string.h>
 #include <assert.h>
 
+int thread_count;
+
 ThreadPool_t *ThreadPool_create(int num) {
 
     // make new threadpool (tp)
@@ -29,10 +31,13 @@ ThreadPool_t *ThreadPool_create(int num) {
     // init synchronization primitives
     pthread_mutex_init(&(tp -> mutex), NULL);
     pthread_cond_init(&(tp -> cond), NULL);
-
+    thread_count = 0;
     // create pthreads
     for (int i = 0; i < num; i++) {
         pthread_create(&(tp -> threads[i]), NULL, (void *)Thread_run, tp);
+    }
+    while (thread_count != num) {
+
     }
     return tp;
 }
@@ -56,7 +61,7 @@ void ThreadPool_destroy(ThreadPool_t *tp) {
     cur_work = tp -> work_queue -> head;
     while (cur_work != NULL) {
         temp_work = cur_work;
-        cur_work = cur_work -> next; // TODO: is head.next going towards tail?
+        cur_work = cur_work -> next;
         free(temp_work);
     }
 
@@ -93,54 +98,58 @@ bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
     is_added = true;
     tp -> work_queue -> cur_size++; // update size of queue
 
-    pthread_mutex_unlock(&(tp -> mutex));
     pthread_cond_signal(&(tp -> cond)); // wake a waiting thread to do work
+    pthread_mutex_unlock(&(tp -> mutex));
 
     return is_added;
 }
 
 ThreadPool_work_t *ThreadPool_get_work(ThreadPool_t *tp) {
-    return NULL;
+    return tp -> work_queue -> head; // return current work
 }
 
 void *Thread_run(ThreadPool_t *tp) {
+    pthread_mutex_lock(&(tp -> mutex)); // lock the queue
+    thread_count++;
+    pthread_mutex_unlock(&(tp -> mutex)); // lock the queue
 
     printf("Thread_run: Thread %lu is ready\n", pthread_self());
     ThreadPool_work_t *cur_work;
     while (1) {
         pthread_mutex_lock(&(tp -> mutex)); // lock the queue
-
         // if none work left
         if (tp -> work_queue -> head == NULL) { 
-            if (tp -> shutdown == 0) { // if shutdown pool
+            if (tp -> shutdown == 0) { // if pool is not shutdown
                 printf("Thread_run: Thread %lu is waiting\n", pthread_self());
                 pthread_cond_wait(&(tp -> cond), &(tp -> mutex));
-            } else { // if not shutdown pool
+                printf("Thread_run: Got work!\n");
+                pthread_mutex_unlock(&(tp -> mutex));
+            } else if (tp -> shutdown == 1) { // if shutdown pool
                 pthread_mutex_unlock(&(tp -> mutex));
                 printf("Thread_run: Thread %lu is done\n", pthread_self());
                 pthread_exit(NULL);
-            }   
+            } 
+        } else {
+            // when work queue is not empty
+            printf("Thread_run: Thread %lu is going to work\n", pthread_self());
+
+            assert(tp -> work_queue -> cur_size != 0); // make sure queue is not empty
+            
+            cur_work = ThreadPool_get_work(tp);
+            tp -> work_queue -> cur_size--; // decrease queue size after get work
+            tp -> work_queue -> head = tp -> work_queue -> head -> next; // move head to next
+            pthread_mutex_unlock(&(tp -> mutex));
+            (cur_work -> func)(cur_work -> arg); // run the cur work's func
+            free(cur_work);
+            cur_work = NULL;
         }
-
-        // when work queue is not empty
-        printf("Thread_run: Thread %lu is going to work\n", pthread_self());
-        if (tp -> work_queue -> head == NULL) { // make sure head is not NULL
-            perror("work queue head is NULL\n");
-        } 
-
-        cur_work = tp -> work_queue -> head;
-        tp -> work_queue -> head = tp -> work_queue -> head -> next;
-        pthread_mutex_unlock(&(tp -> mutex));
-        (cur_work -> func)(cur_work -> arg); // run the cur work's func
-        free(cur_work);
-        cur_work = NULL;
+        
     }
 }
 
 // **************************************************************
 void my_func(void *arg) {
     printf("my_func: Thread %lu working on %d*\n", pthread_self(), *(int *) arg);
-    sleep(1);
     return;
 }
 
@@ -153,7 +162,6 @@ int main() {
         ThreadPool_add_work(tp, my_func, &num_work[i]);
     }
 
-    sleep(5);
 
     ThreadPool_destroy(tp);
 
