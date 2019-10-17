@@ -90,16 +90,17 @@ bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
     if (tp -> work_queue -> head == NULL) { // if queue is empty
         tp -> work_queue -> head = new_work;
     } else { // if queue not empty
-        while (tp -> work_queue -> head -> next != NULL) {
-            tp -> work_queue -> head = tp -> work_queue -> head -> next;
+        ThreadPool_work_t *cur = tp -> work_queue -> head;
+        while (cur -> next != NULL) {
+            cur = cur -> next;
         }
-        tp -> work_queue -> head -> next = new_work; // add new_work to head
+        cur -> next = new_work; // add new_work to head
     }
     is_added = true;
     tp -> work_queue -> cur_size++; // update size of queue
 
-    pthread_cond_signal(&(tp -> cond)); // wake a waiting thread to do work
     pthread_mutex_unlock(&(tp -> mutex));
+    pthread_cond_signal(&(tp -> cond)); // wake a waiting thread to do work
 
     return is_added;
 }
@@ -109,22 +110,21 @@ ThreadPool_work_t *ThreadPool_get_work(ThreadPool_t *tp) {
 }
 
 void *Thread_run(ThreadPool_t *tp) {
-    pthread_mutex_lock(&(tp -> mutex)); // lock the queue
+    pthread_mutex_lock(&(tp -> mutex));
     thread_count++;
-    pthread_mutex_unlock(&(tp -> mutex)); // lock the queue
+    pthread_mutex_unlock(&(tp -> mutex));
 
     printf("Thread_run: Thread %lu is ready\n", pthread_self());
     ThreadPool_work_t *cur_work;
     while (1) {
-        pthread_mutex_lock(&(tp -> mutex)); // lock the queue
+        pthread_mutex_lock(&(tp -> mutex));
         // if none work left
         if (tp -> work_queue -> head == NULL) { 
             if (tp -> shutdown == 0) { // if pool is not shutdown
                 printf("Thread_run: Thread %lu is waiting\n", pthread_self());
                 pthread_cond_wait(&(tp -> cond), &(tp -> mutex));
-                printf("Thread_run: Got work!\n");
                 pthread_mutex_unlock(&(tp -> mutex));
-            } else if (tp -> shutdown == 1) { // if shutdown pool
+            } else { // if shutdown pool
                 pthread_mutex_unlock(&(tp -> mutex));
                 printf("Thread_run: Thread %lu is done\n", pthread_self());
                 pthread_exit(NULL);
@@ -147,25 +147,25 @@ void *Thread_run(ThreadPool_t *tp) {
     }
 }
 
-// **************************************************************
-void my_func(void *arg) {
-    printf("my_func: Thread %lu working on %d*\n", pthread_self(), *(int *) arg);
-    return;
-}
+// *********************tester function*************************
+// void my_func(void *arg) {
+//     printf("my_func: Thread %lu working on %d*\n", pthread_self(), *(int *) arg);
+//     sleep(2);
+//     return;
+// }
 
-int main() {
-    ThreadPool_t *tp = ThreadPool_create(3);
+// int main() {
+//     ThreadPool_t *tp = ThreadPool_create(3);
 
-    int *num_work = (int *) malloc(sizeof(int) * 5);
-    for (int i = 0; i < 5; i++) {
-        num_work[i] = i;
-        ThreadPool_add_work(tp, my_func, &num_work[i]);
-    }
+//     int *num_work = (int *) malloc(sizeof(int) * 10);
+//     for (int i = 0; i < 10; i++) {
+//         num_work[i] = i;
+//         ThreadPool_add_work(tp, my_func, &num_work[i]);
+//     }
 
+//     ThreadPool_destroy(tp);
 
-    ThreadPool_destroy(tp);
+//     free(num_work);
 
-    free(num_work);
-
-    return 0;
-}
+//     return 0;
+// }
