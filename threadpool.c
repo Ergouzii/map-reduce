@@ -37,7 +37,7 @@ ThreadPool_t *ThreadPool_create(int num) {
         pthread_create(&(tp -> threads[i]), NULL, (void *)Thread_run, tp);
     }
     while (thread_count != num) {
-
+        // spin while not all threads are created
     }
     return tp;
 }
