@@ -1,24 +1,25 @@
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <assert.h>
+
 #include "mapreduce.h"
 #include "threadpool.h"
 
 void MR_Run(int num_files, char *filenames[], 
             Mapper map, int num_mappers,
             Reducer concate, int num_reducers) {
+
+    ThreadPool_t *tp = ThreadPool_create(num_mappers); // create a threadpool for mappers
     
-    // for each file_name
+    // add each file_name to work queue
     for (int i = 0; i < num_files; i++) {
-        
+        // make sure add_work is working
+        assert(ThreadPool_add_work(tp, map, filenames[i]) != false);
     }
 
-    // create mappers
-    for (int i = 0; i < num_mappers; i++) {
-        
-    }
-
-    // create reducers
-    for (int i = 0; i < num_reducers; i++) {
-        
-    }
     
 }
 
