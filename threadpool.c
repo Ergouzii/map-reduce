@@ -23,7 +23,7 @@ ThreadPool_t *ThreadPool_create(int num) {
 
     // init work queue
     tp -> work_queue = (ThreadPool_work_queue_t *) \
-                malloc(sizeof(ThreadPool_work_queue_t) * 1); // TODO: what is queue's max size?
+                malloc(sizeof(ThreadPool_work_queue_t) * 1);
     tp -> work_queue -> cur_size = 0;
     tp -> work_queue -> head = NULL;
     tp -> work_queue -> tail = NULL;

@@ -10,6 +10,8 @@ https://github.com/Pithikos/C-Thread-Pool/blob/master/thpool.c
 
 https://github.com/mbrossard/threadpool/blob/master/src/threadpool.c
 
-**some:**
+**hash function:**
+
+assignment 2 instructions
 
 
