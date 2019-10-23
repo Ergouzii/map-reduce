@@ -97,7 +97,7 @@ bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
         }
         cur -> next = new_work; // add new_work to head
     }
-    // TODO: LJF is here
+    // TODO: LJF is here, am I doing opposite direction? head is largest: 3->2->1
     // struct stat buffer;
     // assert(stat(arg, &buffer) == 0); // make sure stat(2) is successfully runned
     // new_work -> size = buffer.st_size;
