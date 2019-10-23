@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <assert.h>
+#include <sys/stat.h>
 
 int thread_count;
 
@@ -96,6 +97,28 @@ bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
         }
         cur -> next = new_work; // add new_work to head
     }
+    // TODO: LJF is here
+    // struct stat buffer;
+    // assert(stat(arg, &buffer) == 0); // make sure stat(2) is successfully runned
+    // new_work -> size = buffer.st_size;
+
+    // // put new work to queue
+    // pthread_mutex_lock(&(tp -> mutex));
+    // ThreadPool_work_t *cur = tp -> work_queue -> head;
+
+    // if (cur == NULL) { // if queue is empty
+    //     cur = new_work;
+    // } else if (new_work -> size <= cur -> size) { // if new_work has no larger size than cur/head
+    //     new_work -> next = cur; // put the new work to cur's left side
+    //     cur = new_work;
+    // } else { // if queue not empty and new_work size larger than cur/head
+    //     while ((cur -> next != NULL) &&
+    //             (new_work -> size > cur -> next -> size)) {
+    //         cur = cur -> next;
+    //     }
+    //     new_work -> next = cur -> next;
+    //     cur -> next = new_work; // add new_work to head
+    // }
     is_added = true;
     tp -> work_queue -> cur_size++; // update size of queue
 
