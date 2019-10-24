@@ -1,6 +1,6 @@
 CC:=gcc
 WARN:=-Wall 
-LIB:=-lm -pthread -O3
+LIB:=-lm -pthread
 CCOPTS:=-std=c99 -ggdb -D_GNU_SOURCE
 TARGET:=distwc
 
