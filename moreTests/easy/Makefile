@@ -1,12 +1,12 @@
 CC:=gcc
 WARN:=-Wall 
-LIB:=-lm -pthread -O3
+LIB:=-lm -pthread
 CCOPTS:=-std=c99 -ggdb -D_GNU_SOURCE
 TARGET:=distwc
 
 $(TARGET): ../threadpool.o ../mapreduce.o distwc.o
 	$(CC) $(WARN) $(CCOPTS) $^ -o $@ $(LIB)
-	g++ -o validation validation.cc -std=c++11 -Wall -O3
+	g++ -o validation validation.cc -std=c++11 -Wall
 
 %.o: %.c
 	$(CC) $(WARN) $(CCOPTS) $< -c $(LIB)
