@@ -15,7 +15,6 @@ typedef struct ThreadPool_work_t {
 
 typedef struct {
     ThreadPool_work_t *head;
-    ThreadPool_work_t *tail;
     int cur_size; // current num of works in queue
 } ThreadPool_work_queue_t;
 
@@ -25,7 +24,6 @@ typedef struct {
     int max_thread_num;
     int shutdown; // whether treadpool is shutdown, 1 = yes, 0 = no
     pthread_t *threads; // all threads
-    // int num_alive_threads; // number of running threads
     ThreadPool_work_queue_t *work_queue; // working threads in queue
 } ThreadPool_t;
 
