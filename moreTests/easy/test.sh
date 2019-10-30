@@ -42,3 +42,5 @@ make clean-all
 cd ..
 
 make clean-all
+
+cd easy
