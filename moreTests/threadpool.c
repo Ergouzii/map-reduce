@@ -27,7 +27,6 @@ ThreadPool_t *ThreadPool_create(int num) {
                 malloc(sizeof(ThreadPool_work_queue_t) * 1);
     tp -> work_queue -> cur_size = 0;
     tp -> work_queue -> head = NULL;
-    tp -> work_queue -> tail = NULL;
 
     // init synchronization primitives
     pthread_mutex_init(&(tp -> mutex), NULL);
@@ -70,6 +69,7 @@ void ThreadPool_destroy(ThreadPool_t *tp) {
     pthread_mutex_destroy(&(tp -> mutex));
 	pthread_cond_destroy(&(tp -> cond));
  
+    free(tp -> work_queue);
 	free(tp);
 	// point tp to NULL after freeing
 	tp = NULL;
