@@ -24,6 +24,14 @@ do
         FILES+=" $file"
 done
 
+cd ..
+
+make clean-all
+
+make
+
+cd easy
+
 make
 
 echo "First run"
