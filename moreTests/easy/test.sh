@@ -9,6 +9,14 @@ do
         FILES+=" $file"
 done
 
+cd ..
+
+make clean-all
+
+make
+
+cd easy
+
 make
 
 ./distwc 1 1 ${FILES}
