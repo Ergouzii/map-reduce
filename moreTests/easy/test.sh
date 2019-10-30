@@ -17,6 +17,8 @@ make
 
 cd easy
 
+make clean-all
+
 make
 
 ./distwc 1 1 ${FILES}
