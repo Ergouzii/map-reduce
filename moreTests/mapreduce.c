@@ -51,8 +51,6 @@ void MR_Run(int num_files, char *filenames[],
 
     ThreadPool_destroy(mapper_tp); // destroy mapper tp
 
-    printf("\n*****************\nmappers done, now reducers\n*****************\n\n");
-
     // create reducer threadpool
     ThreadPool_t *reducer_tp = ThreadPool_create(num_reducers);
 
