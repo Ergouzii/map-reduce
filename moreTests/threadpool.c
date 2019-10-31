@@ -91,6 +91,7 @@ bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
         ;
     }
 
+    // TODO: LJF first element is wrong
     printf("file: %s -> %zu\n", new_work->arg, new_work->size);
     
     pthread_mutex_lock(&(tp -> mutex));
