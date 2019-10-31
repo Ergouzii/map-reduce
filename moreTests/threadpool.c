@@ -83,44 +83,36 @@ bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
     new_work -> func = func;
     new_work -> arg = arg;
     new_work -> next = NULL;
-    // TODO: init work size here using stat(2)
+
+    struct stat buffer;
+    if (stat(arg, &buffer) == 0) { // when arg is a filename (working for mappers)
+        new_work -> size = buffer.st_size;
+    } else { // when arg is not a filename (working for reducers)
+        ;
+    }
+
+    printf("file: %s -> %zu\n", new_work->arg, new_work->size);
+    
+    pthread_mutex_lock(&(tp -> mutex));
 
     // put new work to queue
-    // TODO: add new work in LJF order
-    pthread_mutex_lock(&(tp -> mutex));
-    if (tp -> work_queue -> head == NULL) { // if queue is empty
+    if ((tp -> work_queue -> head == NULL) || 
+        (new_work -> size > tp -> work_queue -> head -> size)) {
+        new_work -> next = tp -> work_queue -> head;; // put the new work to cur's left side
         tp -> work_queue -> head = new_work;
-    } else { // if queue not empty
+    } else { // if queue not empty and new_work size larger than cur/head
         ThreadPool_work_t *cur = tp -> work_queue -> head;
-        while (cur -> next != NULL) {
+        while ((cur -> next != NULL) &&
+                (new_work -> size <= cur -> next -> size)) {
             cur = cur -> next;
         }
-        cur -> next = new_work; // add new_work to head
+        new_work -> next = cur -> next;
+        cur -> next = new_work;
     }
-    // TODO: LJF is here, am I doing opposite direction? head is largest: 3->2->1
-    // struct stat buffer;
-    // assert(stat(arg, &buffer) == 0); // make sure stat(2) is successfully runned
-    // new_work -> size = buffer.st_size;
-
-    // // put new work to queue
-    // pthread_mutex_lock(&(tp -> mutex));
-    // ThreadPool_work_t *cur = tp -> work_queue -> head;
-
-    // if (cur == NULL) { // if queue is empty
-    //     cur = new_work;
-    // } else if (new_work -> size <= cur -> size) { // if new_work has no larger size than cur/head
-    //     new_work -> next = cur; // put the new work to cur's left side
-    //     cur = new_work;
-    // } else { // if queue not empty and new_work size larger than cur/head
-    //     while ((cur -> next != NULL) &&
-    //             (new_work -> size > cur -> next -> size)) {
-    //         cur = cur -> next;
-    //     }
-    //     new_work -> next = cur -> next;
-    //     cur -> next = new_work; // add new_work to head
-    // }
     is_added = true;
     tp -> work_queue -> cur_size++; // update size of queue
+
+    printf("*%zu\n", tp -> work_queue -> head ->size);
 
     pthread_mutex_unlock(&(tp -> mutex));
     pthread_cond_signal(&(tp -> cond)); // wake a waiting thread to do work
