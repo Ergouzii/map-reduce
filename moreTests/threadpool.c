@@ -76,6 +76,9 @@ void ThreadPool_destroy(ThreadPool_t *tp) {
 }
 
 bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
+
+    pthread_mutex_lock(&(tp -> mutex));
+
     bool is_added = false;
 
     // create a new work
@@ -88,13 +91,8 @@ bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
     if (stat(arg, &buffer) == 0) { // when arg is a filename (working for mappers)
         new_work -> size = buffer.st_size;
     } else { // when arg is not a filename (working for reducers)
-        ;
+        new_work -> size = 0;
     }
-
-    // TODO: LJF first element is wrong
-    printf("file: %s -> %zu\n", new_work->arg, new_work->size);
-    
-    pthread_mutex_lock(&(tp -> mutex));
 
     // put new work to queue
     if ((tp -> work_queue -> head == NULL) || 
@@ -112,8 +110,6 @@ bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
     }
     is_added = true;
     tp -> work_queue -> cur_size++; // update size of queue
-
-    printf("*%zu\n", tp -> work_queue -> head ->size);
 
     pthread_mutex_unlock(&(tp -> mutex));
     pthread_cond_signal(&(tp -> cond)); // wake a waiting thread to do work
@@ -145,7 +141,7 @@ void *Thread_run(ThreadPool_t *tp) {
         } else {
             // when work queue is not empty
             assert(tp -> work_queue -> cur_size != 0); // make sure queue is not empty
-            
+
             cur_work = ThreadPool_get_work(tp);
             tp -> work_queue -> cur_size--; // decrease queue size after get work
             tp -> work_queue -> head = tp -> work_queue -> head -> next; // move head to next
