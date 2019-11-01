@@ -33,7 +33,7 @@ void MR_Run(int num_files, char *filenames[],
     REDUCER = concate;
     
     // initialize each element in PAIR_TABLES
-    PAIR_TABLES = (Pair_Table *)(malloc(NUM_PARTITIONS * sizeof(Pair_Table))); //TODO: free it!
+    PAIR_TABLES = (Pair_Table *)(malloc(NUM_PARTITIONS * sizeof(Pair_Table)));
     for (int i = 0; i < NUM_PARTITIONS; i++) {
         PAIR_TABLES[i].head = NULL;
         PAIR_TABLES[i].cur = NULL;
@@ -62,15 +62,16 @@ void MR_Run(int num_files, char *filenames[],
 
     ThreadPool_destroy(reducer_tp); // destroy reducer tp
 
-    // for (int i = 0; i < num_reducers; i++) {
-    //     while (PAIR_TABLES[i].head -> next != NULL) {
-    //         free(PAIR_TABLES[i].head -> key);
-    //         free(PAIR_TABLES[i].head -> value);
-    //         PAIR_TABLES[i].head = PAIR_TABLES[i].head -> next;
-    //     }       
-    //     // free(&PAIR_TABLES[i]);
-    // }
-    // free(PAIR_TABLES);
+    for (int i = 0; i < NUM_PARTITIONS; i++) {
+        while (PAIR_TABLES[i].head != NULL) {
+            free(PAIR_TABLES[i].head -> key);
+            free(PAIR_TABLES[i].head -> value);
+            K_V_Pair *temp = PAIR_TABLES[i].head -> next;
+            free(PAIR_TABLES[i].head);
+            PAIR_TABLES[i].head = temp;
+        }
+    }
+    free(PAIR_TABLES);
 }
 
 /*
@@ -108,8 +109,6 @@ void MR_Emit(char *key, char *value) {
     }
 
     pthread_mutex_unlock(&(PAIR_TABLES[partition_num].mutex));
-
-    //TODO: free(new_pair); // THIS CAUSES SEG FAULT
 }
 
 // source: assignment 2 instructions
