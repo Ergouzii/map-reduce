@@ -75,7 +75,7 @@ void ThreadPool_destroy(ThreadPool_t *tp) {
 	tp = NULL;
 }
 
-bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
+bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg, int isMapperWork) {
 
     pthread_mutex_lock(&(tp -> mutex));
 
@@ -88,8 +88,11 @@ bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg) {
     new_work -> next = NULL;
 
     struct stat buffer;
-    if (stat(arg, &buffer) == 0) { // when arg is a filename (working for mappers)
-        new_work -> size = buffer.st_size;
+    
+    if (isMapperWork == 1) { // when arg is a filename (working for mappers)
+        if (stat(arg, &buffer) == 0) { 
+            new_work -> size = buffer.st_size;
+        }
     } else { // when arg is not a filename (working for reducers)
         new_work -> size = 0;
     }

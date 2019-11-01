@@ -46,7 +46,7 @@ void MR_Run(int num_files, char *filenames[],
     // add each file_name to work queue
     for (int i = 0; i < num_files; i++) {
         // make sure add_work is working
-        assert(ThreadPool_add_work(mapper_tp, (thread_func_t)map, filenames[i]) != false);
+        assert(ThreadPool_add_work(mapper_tp, (thread_func_t)map, filenames[i], 1) != false);
     }
 
     ThreadPool_destroy(mapper_tp); // destroy mapper tp
@@ -57,7 +57,7 @@ void MR_Run(int num_files, char *filenames[],
     // add work to reducer's work queue
     for (long i = 0; i < num_reducers; i++) {
         // make sure add_work is working
-        assert(ThreadPool_add_work(reducer_tp, (thread_func_t)MR_ProcessPartition, (void *)i) != false);
+        assert(ThreadPool_add_work(reducer_tp, (thread_func_t)MR_ProcessPartition, (void *)i, 0) != false);
     }
 
     ThreadPool_destroy(reducer_tp); // destroy reducer tp
