@@ -50,11 +50,12 @@ void ThreadPool_destroy(ThreadPool_t *tp);
 *     tp   - The ThreadPool object to add the task to
 *     func - The function pointer that will be called in the thread
 *     arg  - The arguments for the function
+*     isMapperWork - Indicates whether new work is a work for map functions
 * Return:
 *     true  - If successful
 *     false - Otherwise
 */
-bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg);
+bool ThreadPool_add_work(ThreadPool_t *tp, thread_func_t func, void *arg, int isMapperWork);
 
 /**
 * Get a task from the given ThreadPool object
