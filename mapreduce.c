@@ -31,8 +31,6 @@ void MR_Run(int num_files, char *filenames[],
 
     NUM_PARTITIONS = num_reducers;
     REDUCER = concate;
-
-    printf("\n**%s**\n", filenames[0]);
     
     // initialize each element in PAIR_TABLES
     PAIR_TABLES = (Pair_Table *)(malloc(NUM_PARTITIONS * sizeof(Pair_Table)));
