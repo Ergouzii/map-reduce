@@ -1,5 +1,5 @@
 CC:=gcc
-WARN:=-Wall 
+WARN:=-Wall -Werror
 LIB:=-lm -pthread
 CCOPTS:=-std=c99 -ggdb -D_GNU_SOURCE
 
