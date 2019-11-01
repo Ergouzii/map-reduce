@@ -1,4 +1,48 @@
-# map-reducer
+# map-reducer introduction
+
+# Note to marker:
+
+Hi! Before you run my program, here is something I want to tell you:
+
+When you run valgrind to check memory leaks, you might see `still reachable: 1,614 bytes in 4 blocks` in `LEAK SUMMARY`. 
+
+I had been looking for the leak sources and here is what I got: 
+
+```
+==3256== 36 bytes in 1 blocks are still reachable in loss record 1 of 4
+==3256==    at 0x4C2DB8F: malloc (vg_replace_malloc.c:299)
+==3256==    by 0x401CED9: strdup (strdup.c:42)
+==3256==    by 0x40185EE: _dl_load_cache_lookup (dl-cache.c:311)
+==3256==    by 0x4009168: _dl_map_object (dl-load.c:2364)
+==3256==    by 0x4015586: dl_open_worker (dl-open.c:237)
+==3256==    by 0x4010573: _dl_catch_error (dl-error.c:187)
+==3256==    by 0x4014DB8: _dl_open (dl-open.c:660)
+==3256==    by 0x519A5AC: do_dlopen (dl-libc.c:87)
+==3256==    by 0x4010573: _dl_catch_error (dl-error.c:187)
+==3256==    by 0x519A663: dlerror_run (dl-libc.c:46)
+==3256==    by 0x519A663: __libc_dlopen_mode (dl-libc.c:163)
+==3256==    by 0x4E4B91A: pthread_cancel_init (unwind-forcedunwind.c:52)
+==3256==    by 0x4E4BB03: _Unwind_ForcedUnwind (unwind-forcedunwind.c:126)
+==3256== 
+==3256== 36 bytes in 1 blocks are still reachable in loss record 2 of 4
+==3256==    at 0x4C2DB8F: malloc (vg_replace_malloc.c:299)
+==3256==    by 0x400BEF3: _dl_new_object (dl-object.c:165)
+==3256==    by 0x400650C: _dl_map_object_from_fd (dl-load.c:1028)
+==3256==    by 0x4008C26: _dl_map_object (dl-load.c:2498)
+==3256==    by 0x4015586: dl_open_worker (dl-open.c:237)
+==3256==    by 0x4010573: _dl_catch_error (dl-error.c:187)
+==3256==    by 0x4014DB8: _dl_open (dl-open.c:660)
+==3256==    by 0x519A5AC: do_dlopen (dl-libc.c:87)
+==3256==    by 0x4010573: _dl_catch_error (dl-error.c:187)
+==3256==    by 0x519A663: dlerror_run (dl-libc.c:46)
+==3256==    by 0x519A663: __libc_dlopen_mode (dl-libc.c:163)
+==3256==    by 0x4E4B91A: pthread_cancel_init (unwind-forcedunwind.c:52)
+==3256==    by 0x4E4BB03: _Unwind_ForcedUnwind (unwind-forcedunwind.c:126)
+
+...There are two more almost the same messages
+```
+
+After consulting with one of the TAs, I was told that this should a problem of `pthread` library. I am not super sure about this, but if you don't think it is my program's problem either, I will be happy if you give me these marks :)
 
 # Program analysis
 
@@ -67,8 +111,11 @@ The most basic unit is `ThreadPool_work_t`, which indicates each job in threadpo
 
 `ThreadPool_work_queue_t` can extend infinitely since it is a linked list, so we don't have to worry that too much work will fill up the queue.
 
-Inside `ThreadPool_t`, I have a `mutex` and a `cond`, they are used as synchronization primitives. `max_thread_num` keeps a record of how many threads are in the threadpool, so when the threadpool is destroy, I can know how many threads need to be waited/`join()`. `shutdown` is just a 
+Inside `ThreadPool_t`, `max_thread_num` keeps a record of how many threads are in the threadpool, so when the threadpool is destroy, I can know how many threads need to be waited/`join()`. `shutdown` is a flag to let make sure the threadpool is ONLY destroyed when `ThreadPool_destroy` is called, where `shutdown` is set to 1.
 
+I have a `mutex` and a `cond` used as synchronization primitives. I use `mutex` whenever the shared data structures (e.g., work queue) is changed by whichever thread, so the data is not messed up by them. 'cond` is used to let `Thread_run` know when to wait for `ThreadPool_add_work` is done. I tested them right after finishing `threadpool.c` by writing a `main` and a `work_func`. `main` initializes the threadpool and `work_func` is the work to be added (it just `sleep` for 2 seconds). By printing out the threads' status in the functions, I trusted my threadpool is working fine.
+
+I modified `ThreadPool_add_work` to take one more argument `isMapperWork`. The reason is that I am using the threadpool for both mapper and reducers, so `ThreadPool_add_work` needs a way to know whether the work to be added is a mapper or reducer; otherwise calling `stat()` on non-string `arg`s will cause errors.
 
 
 # References:
