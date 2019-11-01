@@ -1,4 +1,6 @@
-# map-reducer introduction
+# Map-Reduce introduction
+
+MapReduce is a programming model and a distributed computing paradigm for large-scale data processing. It allows for applications to run various tasks in parallel, making them scalable and fault-tolerant. To use the MapReduce infrastructure, developers need to write just a little bit of code in addition to their program. They do not need to worry about how to parallelize their program; the MapReduce runtime will make this happen!
 
 # Note to marker:
 
@@ -114,6 +116,8 @@ The most basic unit is `ThreadPool_work_t`, which indicates each job in threadpo
 Inside `ThreadPool_t`, `max_thread_num` keeps a record of how many threads are in the threadpool, so when the threadpool is destroy, I can know how many threads need to be waited/`join()`. `shutdown` is a flag to let make sure the threadpool is ONLY destroyed when `ThreadPool_destroy` is called, where `shutdown` is set to 1.
 
 I have a `mutex` and a `cond` used as synchronization primitives. I use `mutex` whenever the shared data structures (e.g., work queue) is changed by whichever thread, so the data is not messed up by them. 'cond` is used to let `Thread_run` know when to wait for `ThreadPool_add_work` is done. I tested them right after finishing `threadpool.c` by writing a `main` and a `work_func`. `main` initializes the threadpool and `work_func` is the work to be added (it just `sleep` for 2 seconds). By printing out the threads' status in the functions, I trusted my threadpool is working fine.
+
+---
 
 I modified `ThreadPool_add_work` to take one more argument `isMapperWork`. The reason is that I am using the threadpool for both mapper and reducers, so `ThreadPool_add_work` needs a way to know whether the work to be added is a mapper or reducer; otherwise calling `stat()` on non-string `arg`s will cause errors.
 
