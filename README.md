@@ -82,7 +82,7 @@ In best case, it finds the head is `NULL` and end, `O(1)`.
 
 For `MR_GetNext`, the time complexity is `O(1)`. Once it gets input key, it simply get the next element of the input key and return it.
 
-## Work queue in threadpool
+## Threadpool
 
 The work queue data structure is defined in `threadpool.h` like this:
 
