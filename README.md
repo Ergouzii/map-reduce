@@ -2,50 +2,6 @@
 
 MapReduce is a programming model and a distributed computing paradigm for large-scale data processing. It allows for applications to run various tasks in parallel, making them scalable and fault-tolerant. To use the MapReduce infrastructure, developers need to write just a little bit of code in addition to their program. They do not need to worry about how to parallelize their program; the MapReduce runtime will make this happen!
 
-# Note to marker:
-
-Hi! Before you run my program, here is something I want to tell you:
-
-When you run valgrind to check memory leaks, you might see `still reachable: 1,614 bytes in 4 blocks` in `LEAK SUMMARY`. 
-
-I had been looking for the leak sources and here is what I got: 
-
-```
-==3256== 36 bytes in 1 blocks are still reachable in loss record 1 of 4
-==3256==    at 0x4C2DB8F: malloc (vg_replace_malloc.c:299)
-==3256==    by 0x401CED9: strdup (strdup.c:42)
-==3256==    by 0x40185EE: _dl_load_cache_lookup (dl-cache.c:311)
-==3256==    by 0x4009168: _dl_map_object (dl-load.c:2364)
-==3256==    by 0x4015586: dl_open_worker (dl-open.c:237)
-==3256==    by 0x4010573: _dl_catch_error (dl-error.c:187)
-==3256==    by 0x4014DB8: _dl_open (dl-open.c:660)
-==3256==    by 0x519A5AC: do_dlopen (dl-libc.c:87)
-==3256==    by 0x4010573: _dl_catch_error (dl-error.c:187)
-==3256==    by 0x519A663: dlerror_run (dl-libc.c:46)
-==3256==    by 0x519A663: __libc_dlopen_mode (dl-libc.c:163)
-==3256==    by 0x4E4B91A: pthread_cancel_init (unwind-forcedunwind.c:52)
-==3256==    by 0x4E4BB03: _Unwind_ForcedUnwind (unwind-forcedunwind.c:126)
-==3256== 
-==3256== 36 bytes in 1 blocks are still reachable in loss record 2 of 4
-==3256==    at 0x4C2DB8F: malloc (vg_replace_malloc.c:299)
-==3256==    by 0x400BEF3: _dl_new_object (dl-object.c:165)
-==3256==    by 0x400650C: _dl_map_object_from_fd (dl-load.c:1028)
-==3256==    by 0x4008C26: _dl_map_object (dl-load.c:2498)
-==3256==    by 0x4015586: dl_open_worker (dl-open.c:237)
-==3256==    by 0x4010573: _dl_catch_error (dl-error.c:187)
-==3256==    by 0x4014DB8: _dl_open (dl-open.c:660)
-==3256==    by 0x519A5AC: do_dlopen (dl-libc.c:87)
-==3256==    by 0x4010573: _dl_catch_error (dl-error.c:187)
-==3256==    by 0x519A663: dlerror_run (dl-libc.c:46)
-==3256==    by 0x519A663: __libc_dlopen_mode (dl-libc.c:163)
-==3256==    by 0x4E4B91A: pthread_cancel_init (unwind-forcedunwind.c:52)
-==3256==    by 0x4E4BB03: _Unwind_ForcedUnwind (unwind-forcedunwind.c:126)
-
-...There are two more almost the same messages
-```
-
-After consulting with one of the TAs, I was told that this should a problem of `pthread` library. I am not super sure about this, but if you don't think it is my program's problem either, I will be happy if you give me these marks :)
-
 # Program analysis
 
 ## map-reduce
